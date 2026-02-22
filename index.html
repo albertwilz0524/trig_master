@@ -770,13 +770,13 @@
         let sigImg = new Image();
         sigImg.onload = () => {
             // Keep the width proportional and small enough to fit neatly with the timestamps
-            let imgWidth = 320; 
+            let imgWidth = 280; 
             let imgHeight = (sigImg.height / sigImg.width) * imgWidth;
             
             // X position: right-aligned with an 80px pad from the edge
             // Y position: centered vertically with respect to the Started/Finished texts
             let imgX = canvas.width - 80 - imgWidth; 
-            let imgY = 525 - (imgHeight / 2);
+            let imgY = 515 - (imgHeight / 2);
             
             ctx.drawImage(sigImg, imgX, imgY, imgWidth, imgHeight);
             downloadCanvas();
