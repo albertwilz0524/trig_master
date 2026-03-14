@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trigonometry Problem Generator</title>
+    <!-- KaTeX for rendering LaTeX step-by-step solutions -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <!-- MathLive for rich math input -->
+    <script defer src="https://unpkg.com/mathlive"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eaeff1; margin: 0; padding: 15px; color: #333; }
+        .container { width: 100%; max-width: 900px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; font-size: 2.2em; margin-top: 0; margin-bottom: 25px; }
+        
+        .tabs { display: flex; margin-bottom: 25px; border-bottom: 3px solid #e0e0e0; }
+        .tab { flex: 1; text-align: center; padding: 15px 10px; cursor: pointer; font-weight: bold; font-size: 1.1em; color: #7f8c8d; transition: 0.3s; }
+        .tab:hover { background: #f8f9fa; color: #34495e; }
+        .tab.active { border-bottom: 3px solid #3498db; color: #3498db; margin-bottom: -3px; }
+        
+        .section { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .control-panel { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px solid #e0e0e0; }
+        .control-panel label { font-weight: bold; font-size: 1.1em; color: #2c3e50; }
+        .control-panel select, .control-panel input[type="text"] { flex: 1 1 200px; padding: 12px 15px; font-size: 16px; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; transition: border 0.3s; }
+        .control-panel button { flex: 1 1 180px; }
+        select:focus, input:focus { border-color: #3498db; }
+        
+        button { padding: 14px 24px; border: none; background: #3498db; color: white; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s; box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3); touch-action: manipulation; }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; box-shadow: none; }
+        .btn-success { background: #2ecc71; box-shadow: 0 4px 6px rgba(46, 204, 113, 0.3); }
+        .btn-success:hover { background: #27ae60; }
+        .btn-danger { background: #e74c3c; box-shadow: 0 4px 6px rgba(231, 76, 60, 0.3); }
+        .btn-danger:hover { background: #c0392b; }
+        
+        .instruction { font-size: 1.25em; font-weight: bold; color: #e74c3c; text-align: center; margin-top: 20px; padding: 0 10px; }
+        
+        .svg-container { width: 100%; max-width: 500px; aspect-ratio: 3/2; margin: 25px auto; border: 2px solid #ecf0f1; background: #fdfdfd; border-radius: 8px; padding: 10px; display: flex; justify-content: center; align-items: center; }
+        .svg-inner-wrapper { position: relative; width: 100%; height: 100%; }
+        .svg-inner-wrapper svg { width: 100%; height: 100%; display: block; overflow: visible; }
+        
+        .interaction-area { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; width: 100%; }
+        .interaction-area input[type="number"], .interaction-area select.ratio-select { width: 100%; max-width: 300px; padding: 12px 15px; font-size: 18px; text-align: center; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; }
+        .interaction-area select.ratio-select:focus { border-color: #3498db; }
+        .interaction-area button { width: 100%; max-width: 300px; }
+        
+        /* MathLive Fields Styling */
+        math-field { font-size: 18px; padding: 8px 12px; border: 2px solid #bdc3c7; border-radius: 6px; background: #fff; width: 100%; }
+        math-field::part(virtual-keyboard-toggle) { display: none; }
+        math-field::part(menu-toggle) { display: none; }
+        math-field:focus-within { border-color: #3498db; outline: none; }
+
+        .inline-math { display: inline-block; margin: 0; padding: 0; vertical-align: middle; line-height: 1; overflow: visible !important; }
+        
+        .trig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; justify-content: center; width: 100%; max-width: 600px; margin: 0 auto; }
+        .trig-col { display: flex; flex-direction: column; gap: 15px; align-items: center; width: 100%; }
+        
+        /* Rigid row layout preventing button squashing */
+        .trig-row { display: flex !important; flex-direction: row !important; align-items: center; justify-content: center; width: 100%; white-space: nowrap; gap: 8px; margin-bottom: 5px; }
+        .trig-label { font-weight: bold; font-size: 18px; width: 75px; text-align: right; flex: 0 0 75px; color: #2c3e50; }
+        .trig-field { width: 100px; flex: 0 0 100px; }
+        
+        .frac-btn { 
+            padding: 0; background: #95a5a6; color: white; border-radius: 4px; font-weight: bold; border: none; cursor: pointer; 
+            flex: 0 0 40px !important; width: 40px !important; min-width: 40px !important; max-width: 40px !important; height: 42px !important; 
+            font-size: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; margin: 0 !important;
+        }
+        .frac-btn:hover { background: #7f8c8d; }
+        
+        /* Custom Select for LaTeX Options */
+        .custom-select { position: relative; display: inline-block; background: #fff; border: 2px solid #bdc3c7; border-radius: 6px; cursor: pointer; user-select: none; font-size: 16px; outline: none; text-align: center; }
+        .custom-select:focus, .custom-select.open { border-color: #3498db; }
+        .custom-select-trigger { padding: 4px 8px; display: flex; justify-content: center; align-items: center; min-height: 38px; }
+        .custom-options { position: absolute; top: 100%; left: -2px; right: -2px; background: #fff; border: 2px solid #3498db; border-top: none; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; z-index: 100; max-height: 220px; overflow-y: auto; overflow-x: hidden; }
+        .custom-select.open .custom-options { display: block; }
+        .custom-option { padding: 8px; cursor: pointer; border-bottom: 1px solid #ecf0f1; display: flex; align-items: center; justify-content: center; min-height: 38px; }
+        .custom-option:hover { background: #f8f9fa; }
+        .custom-option .inline-math { overflow: visible !important; }
+        
+        .test-question { border-top: 3px dashed #ecf0f1; padding-top: 30px; margin-top: 30px; }
+        .test-question:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+        .test-question .input-wrapper { text-align: center; width: 100%; }
+        
+        .solution-steps { background: #fdfdfd; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 5px solid #2ecc71; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .solution-steps h4 { margin-top: 0; color: #27ae60; font-size: 1.2em; }
+        .math { font-size: 1.3em; margin: 15px 0; color: #2c3e50; overflow-x: auto; overflow-y: hidden; padding-bottom: 5px; }
+        
+        .status-msg { font-size: 1.2em; font-weight: bold; margin-top: 5px; text-align: center; }
+        
+        #testResultsHeader { text-align: center; background: #f4f6f7; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 2px solid #bdc3c7; }
+        #testResultsHeader h2 { margin: 0 0 10px 0; color: #2c3e50; }
+        
+        /* Responsive Media Queries */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            h1 { font-size: 1.8em; }
+            .tabs { margin-bottom: 15px; }
+            .tab { padding: 10px 5px; font-size: 0.95em; }
+            .control-panel { flex-direction: column; align-items: stretch; padding: 15px; }
+            .control-panel label { text-align: left; margin-bottom: -5px; }
+            .control-panel select, .control-panel input[type="text"], .control-panel button { width: 100%; max-width: none; flex: 1 1 auto; }
+            .instruction { font-size: 1.1em; }
+            .math { font-size: 1.1em; }
+            .trig-grid { grid-template-columns: 1fr; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>TrigMaster Pro</h1>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="switchMode('practice')">Practice Mode</div>
+        <div class="tab" onclick="switchMode('test')">Test Mode</div>
+    </div>
+    
+    <!-- Practice Mode -->
+    <div id="practice-section" class="section active">
+        <div class="control-panel">
+            <label>Select Topic:</label>
+            <select id="practiceTopic" onchange="generatePracticeQuestion()">
+                <option value="SOHCAHTOA (missing side)">SOHCAHTOA (missing side)</option>
+                <option value="SOHCAHTOA (missing angle)">SOHCAHTOA (missing angle)</option>
+                <option value="Pythagorean Theorem">Pythagorean Theorem</option>
+                <option value="Sum of Angles of Triangle">Sum of Angles of Triangle</option>
+                <option value="Six Trig Ratios">Six Trig Ratios</option>
+                <option value="Six Trig Ratios of Special Angles">Six Trig Ratios of Special Angles</option>
+                <option value="Determining the Correct Method">Determining the Correct Method</option>
+                <option value="Law of Sines (missing side)">Law of Sines (missing side)</option>
+                <option value="Law of Sines (missing angle)">Law of Sines (missing angle)</option>
+                <option value="Law of Cosines (missing side)">Law of Cosines (missing side)</option>
+                <option value="Law of Cosines (missing angle)">Law of Cosines (missing angle)</option>
+                <option value="Law of Sines or Law of Cosines multiple methods">Law of Sines or Law of Cosines multiple methods</option>
+                <option value="Random Law of Sines or Law of Cosines">Random Law of Sines or Law of Cosines</option>
+                <option value="Random">Random All</option>
+            </select>
+            <button onclick="generatePracticeQuestion()">Generate Question</button>
+        </div>
+        
+        <div id="practiceContent" style="display: none;">
+            <p class="instruction" id="practiceInstruction"></p>
+            <div id="practiceSvg"></div>
+            
+            <div class="interaction-area">
+                <div id="practiceInteraction" style="width:100%; display: flex; flex-direction: column; align-items: center; gap: 15px;"></div>
+                <button id="practiceCheckBtn" onclick="checkPracticeAnswer()">Check</button>
+            </div>
+            <p id="practiceMsg" class="status-msg"></p>
+            
+            <div id="practiceSolution" class="solution-steps" style="display:none;"></div>
+        </div>
+    </div>
+    
+    <!-- Test Mode -->
+    <div id="test-section" class="section">
+        <div id="testSetup" class="control-panel">
+            <label>Student Name:</label>
+            <input type="text" id="studentName" placeholder="Enter your name">
+            <label>Select Topic:</label>
+            <select id="testTopic">
+                <option value="Right Triangle Trigonometry">Right Triangle Trigonometry</option>
+                <option value="Law of Sines">Law of Sines</option>
+                <option value="Law of Cosines">Law of Cosines</option>
+                <option value="Mixed Law of Sines and Law of Cosines">Mixed Law of Sines and Law of Cosines</option>
+                <option value="Mixed Trigonometry">Mixed Trigonometry</option>
+            </select>
+            <button class="btn-success" onclick="startTest()">Start Test</button>
+            <div id="quoteContainer" style="width: 100%; margin-top: 15px; padding-top: 15px; border-top: 1px solid #bdc3c7;">
+                <p id="testQuote" style="font-size: 1.15em; font-style: italic; color: #2c3e50; font-weight: bold; margin: 0 0 5px 0;"></p>
+                <p id="testSubtitle" style="font-size: 0.95em; color: #7f8c8d; margin: 0;"></p>
+            </div>
+        </div>
+        
+        <div id="testContainer" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+    /* =======================================
+       MATHEMATICS CORE & PROBLEM GENERATORS
+       ======================================= */
+    const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const formatDec = (val) => parseFloat(val.toFixed(10)).toString();
+
+    function validAngles(...angles) {
+        return angles.every(a => a >= 30 && a <= 150);
+    }
+
+    // --- MATHLIVE LATEX PARSER ---
+    function parseTex(tex, aVal=1) {
+        if(!tex) return NaN;
+        let s = tex;
+        let old;
+        do { old = s; s = s.replace(/\\frac{((?:[^{}]|{[^{}]*})*)}{((?:[^{}]|{[^{}]*})*)}/g, '(($1)/($2))'); } while(old !== s);
+        do { old = s; s = s.replace(/\\sqrt{((?:[^{}]|{[^{}]*})*)}/g, '(Math.sqrt($1))'); } while(old !== s);
+        
+        s = s.replace(/\\sqrt\s*(\d+)/g, '(Math.sqrt($1))');
+        s = s.replace(/a/g, `(${aVal})`);
+        s = s.replace(/\\left\||\\right\|/g, '');
+        s = s.replace(/\\left\(|\\right\)/g, '');
+        s = s.replace(/\\cdot/g, '*');
+        s = s.replace(/\\times/g, '*');
+        s = s.replace(/[{}]/g, ''); 
+        s = s.replace(/ /g, '');
+        
+        s = s.replace(/(\d)(Math\.sqrt|\()/g, '$1*$2');
+        s = s.replace(/\)(\(|Math\.sqrt|\d)/g, ')*$1');
+        s = s.replace(/[^0-9\.\(\)\+\-\*\/Mathsqrt]/g, ''); 
+        
+        try { return new Function('return ' + s)(); } catch(e) { return NaN; }
+    }
+
+    function checkMathLive(mfId, expectedVal, aVal=1, strictRationalize=false, requireNoVar=false) {
+        let mf = document.getElementById(mfId);
+        if(!mf) return false;
+        let tex = mf.value;
+        if (!tex) return false;
+        
+        if (requireNoVar && tex.includes('a')) return false;
+        
+        if (strictRationalize) {
+            let parts = tex.split('\\frac');
+            for(let i=1; i<parts.length; i++) {
+                let p = parts[i]; 
+                let depth = 0, mid = -1;
+                for(let j=0; j<p.length; j++) {
+                    if(p[j]==='{') depth++;
+                    if(p[j]==='}') depth--;
+                    if(depth===0 && j<p.length-1 && p[j+1]==='{') { mid = j; break; }
+                }
+                if(mid !== -1) {
+                    let denom = p.substring(mid+2);
+                    if(denom.includes('\\sqrt')) return false;
+                }
+            }
+        }
+        
+        let val = parseTex(tex, aVal);
+        if (isNaN(val)) return false;
+        return Math.abs(val - expectedVal) < 1e-4;
+    }
+
+    // --- CUSTOM SELECT INITIALIZATION ---
+    function initCustomSelects() {
+        document.querySelectorAll('.custom-select:not(.initialized)').forEach(el => {
+            el.classList.add('initialized');
+            let trigger = el.querySelector('.custom-select-trigger');
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                let isOpen = el.classList.contains('open');
+                document.querySelectorAll('.custom-select').forEach(other => other.classList.remove('open'));
+                if (!isOpen) el.classList.add('open');
+            });
+            el.querySelectorAll('.custom-option').forEach(opt => {
+                opt.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    let val = opt.getAttribute('data-value');
+                    el.setAttribute('data-value', val);
+                    trigger.innerHTML = opt.innerHTML;
+                    el.classList.remove('open');
+                });
+            });
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-select')) {
+            document.querySelectorAll('.custom-select').forEach(el => el.classList.remove('open'));
+        }
+    });
+
+    // --- INSTRUCTION HELPER ---
+    function getInstruction(prob) {
+        if (prob.type === 'six_ratios') return `Solve for the exact values of the six trigonometric ratios of angle ${prob.angleLabel.replace('\\theta', 'θ')}.`;
+        if (prob.type === 'special_ratios') return `Solve for the exact values of the six trigonometric ratios of ${prob.labelAngle}°. Rationalize denominators.`;
+        if (prob.type === 'determine_method') return `Determine the correct method to solve for x or θ for each triangle.`;
+        if (prob.type === 'multiple_methods') return `Solve for ${prob.targetVariable.replace('\\theta', 'θ')}, rounded to ${prob.targetDecimals === 0 ? 'the nearest whole number' : (prob.targetDecimals === 1 ? '1 decimal place' : '2 decimal places')}.`;
+        
+        let d = prob.targetDecimals;
+        let t = d === 0 ? "nearest whole number" : (d === 1 ? "1 decimal place" : "2 decimal places");
+        return `Solve for ${prob.targetVariable.replace('\\theta', 'θ')}, rounded to ${d === 0 ? 'the ' : ''}${t}.`;
+    }
+
+    // --- TOPIC GENERATORS ---
+    function genPythagorean() {
+        let targetDecimals = Math.floor(Math.random() * 3);
+        let a, b, c, expected;
+        let isTriple = Math.random() < 0.5;
+        let solveFor = ['a', 'b', 'c'][randInt(0, 2)];
+        
+        if (isTriple) {
+            targetDecimals = 0;
+            let m = randInt(2, 5), n = randInt(1, m - 1);
+            a = m*m - n*n; b = 2*m*n; c = m*m + n*n;
+            let k = randInt(1, 4);
+            a *= k; b *= k; c *= k;
+        } else {
+            if (solveFor === 'c') { a = randInt(5, 30); b = randInt(5, 30); c = Math.sqrt(a*a + b*b); }
+            else if (solveFor === 'a') { b = randInt(5, 30); c = randInt(b + 5, 50); a = Math.sqrt(c*c - b*b); }
+            else { a = randInt(5, 30); c = randInt(a + 5, 50); b = Math.sqrt(c*c - a*a); }
+        }
+        
+        let geomA = a, geomB = b, geomC = c;
+        let angleA = Math.atan(a/b) * 180/Math.PI;
+        let angleB = 90 - angleA;
+        if (Math.min(angleA, angleB) < 20) { geomA = a > b ? 4 : 3; geomB = a > b ? 3 : 4; geomC = 5; }
+        
+        let labels = { A: '', B: '', C: '', rightAngleC: true };
+        let steps =[];
+        
+        if (solveFor === 'c') {
+            expected = parseFloat(c.toFixed(targetDecimals));
+            labels.c = 'x'; labels.a = a.toString(); labels.b = b.toString();
+            steps =[ `c^2 = a^2 + b^2`, `x^2 = ${a}^2 + ${b}^2`, `x^2 = ${a*a} + ${b*b}`, `x^2 = ${a*a + b*b}`, `x = \\sqrt{${a*a + b*b}}` ];
+        } else if (solveFor === 'a') {
+            expected = parseFloat(a.toFixed(targetDecimals));
+            labels.a = 'x'; labels.b = b.toString(); labels.c = parseFloat(c.toFixed(2)).toString();
+            steps =[ `c^2 = a^2 + b^2`, `${parseFloat(c.toFixed(2))}^2 = x^2 + ${b}^2`, `${parseFloat((c*c).toFixed(4))} = x^2 + ${b*b}`, `x^2 = ${parseFloat((c*c).toFixed(4))} - ${b*b}`, `x^2 = ${parseFloat((c*c - b*b).toFixed(4))}`, `x = \\sqrt{${parseFloat((c*c - b*b).toFixed(4))}}` ];
+        } else {
+            expected = parseFloat(b.toFixed(targetDecimals));
+            labels.b = 'x'; labels.a = a.toString(); labels.c = parseFloat(c.toFixed(2)).toString();
+            steps =[ `c^2 = a^2 + b^2`, `${parseFloat(c.toFixed(2))}^2 = ${a}^2 + x^2`, `${parseFloat((c*c).toFixed(4))} = ${a*a} + x^2`, `x^2 = ${parseFloat((c*c).toFixed(4))} - ${a*a}`, `x^2 = ${parseFloat((c*c - a*a).toFixed(4))}`, `x = \\sqrt{${parseFloat((c*c - a*a).toFixed(4))}}` ];
+        }
+        steps.push(isTriple ? `x = ${expected}` : `x \\approx ${expected}`);
+        
+        return { type: 'default', targetDecimals, expected, targetVariable: 'x', labels, geom: { A: angleA, B: angleB, C: 90, a: geomA, b: geomB, c: geomC }, steps };
+    }
+
+    function genSumOfAngles() {
+        let A, B, C;
+        let attempts = 0;
+        do {
+            A = randInt(20, 120); B = randInt(20, 120); C = 180 - A - B;
+            if (++attempts > 100) { A = 60; B = 50; C = 70; break; }
+        } while (C < 20 || C > 120);
+        
+        let a = 10 * Math.sin(A * Math.PI/180), b = 10 * Math.sin(B * Math.PI/180), c = 10 * Math.sin(C * Math.PI/180);
+        let geom = { A, B, C, a, b, c };
+        let labels = { A: A + '^\\circ', B: B + '^\\circ', C: '\\theta', a: '', b: '', c: '', rightAngleC: false };
+        
+        return {
+            type: 'default', targetDecimals: 0, expected: C, targetVariable: '\\theta', labels, geom,
+            steps:[ `\\angle A + \\angle B + \\angle C = 180^\\circ`, `${A}^\\circ + ${B}^\\circ + \\theta = 180^\\circ`, `\\theta = 180^\\circ - ${A}^\\circ - ${B}^\\circ`, `\\theta = ${C}^\\circ` ]
+        };
+    }
+
+    function genSixTrigRatios() {
+        let m = randInt(2, 5), n = randInt(1, m - 1);
+        let a = m*m - n*n, b = 2*m*n, c = m*m + n*n;
+        let k = randInt(1, 3);
+        a *= k; b *= k; c *= k;
+        
+        let angleA = Math.atan(a/b) * 180/Math.PI;
+        let geomA = a, geomB = b, geomC = c;
+        if (Math.min(angleA, 90-angleA) < 20) { geomA = a > b ? 4 : 3; geomB = a > b ? 3 : 4; geomC = 5; }
+        
+        let labels = { A: '', B: '', C: '', a: a.toString(), b: b.toString(), c: c.toString(), rightAngleC: true };
+        let useAngleA = Math.random() > 0.5;
+        let angleLabel =['A', 'B', '\\theta'][randInt(0, 2)];
+        if (useAngleA) labels.A = angleLabel; else labels.B = angleLabel;
+        
+        let opp = useAngleA ? a : b, adj = useAngleA ? b : a, hyp = c;
+        let expected = { sin: opp/hyp, cos: adj/hyp, tan: opp/adj, csc: hyp/opp, sec: hyp/adj, cot: adj/opp };
+        
+        return {
+            type: 'six_ratios', angleLabel, expected, labels, geom: { A: angleA, B: 90 - angleA, C: 90, a: geomA, b: geomB, c: geomC },
+            steps:[
+                `\\text{Opposite} = ${opp}, \\text{Adjacent} = ${adj}, \\text{Hypotenuse} = ${hyp}`,
+                `\\sin ${angleLabel} = \\frac{${opp}}{${hyp}} \\quad \\csc ${angleLabel} = \\frac{${hyp}}{${opp}}`,
+                `\\cos ${angleLabel} = \\frac{${adj}}{${hyp}} \\quad \\sec ${angleLabel} = \\frac{${hyp}}{${adj}}`,
+                `\\tan ${angleLabel} = \\frac{${opp}}{${adj}} \\quad \\cot ${angleLabel} = \\frac{${adj}}{${opp}}`
+            ]
+        };
+    }
+
+    function genSpecialAngles() {
+        let is30_60_90 = Math.random() > 0.5;
+        let labelAngle = is30_60_90 ? (Math.random() > 0.5 ? 30 : 60) : 45;
+        
+        let a=1, b=1, c=1, angleA=45, angleB=45;
+        let labels = { A: '', B: '', C: '', rightAngleC: true };
+        let expected = {};
+        
+        if (is30_60_90) {
+            angleA = 30; angleB = 60;
+            a = 1; b = Math.sqrt(3); c = 2; 
+            if (labelAngle === 30) {
+                labels.A = '30^\\circ';
+                labels.a = { type: 'select', id: 'opp' }; 
+                labels.b = { type: 'select', id: 'adj' };
+                labels.c = { type: 'select', id: 'hyp' };
+                expected.opp = '1'; expected.adj = 'sqrt(3)'; expected.hyp = '2';
+                expected.sin = '1/2'; expected.cos = 'sqrt(3)/2'; expected.tan = 'sqrt(3)/3';
+                expected.csc = '2'; expected.sec = '2sqrt(3)/3'; expected.cot = 'sqrt(3)';
+            } else {
+                labels.B = '60^\\circ';
+                labels.b = { type: 'select', id: 'opp' }; 
+                labels.a = { type: 'select', id: 'adj' };
+                labels.c = { type: 'select', id: 'hyp' };
+                expected.opp = 'sqrt(3)'; expected.adj = '1'; expected.hyp = '2';
+                expected.sin = 'sqrt(3)/2'; expected.cos = '1/2'; expected.tan = 'sqrt(3)';
+                expected.csc = '2sqrt(3)/3'; expected.sec = '2'; expected.cot = 'sqrt(3)/3';
+            }
+        } else {
+            angleA = 45; angleB = 45;
+            a = 1; b = 1; c = Math.sqrt(2);
+            labels.A = '45^\\circ';
+            labels.a = { type: 'select', id: 'opp' };
+            labels.b = { type: 'select', id: 'adj' };
+            labels.c = { type: 'select', id: 'hyp' };
+            expected.opp = '1'; expected.adj = '1'; expected.hyp = 'sqrt(2)';
+            expected.sin = 'sqrt(2)/2'; expected.cos = 'sqrt(2)/2'; expected.tan = '1';
+            expected.csc = 'sqrt(2)'; expected.sec = 'sqrt(2)'; expected.cot = '1';
+        }
+
+        let steps =[];
+        let renderStr = (v) => v === 'sqrt(3)' ? '\\sqrt{3}' : (v === 'sqrt(2)' ? '\\sqrt{2}' : v);
+        steps.push(`\\text{Expected Sides: Opposite} = ${renderStr(expected.opp)}, \\text{Adjacent} = ${renderStr(expected.adj)}, \\text{Hypotenuse} = ${renderStr(expected.hyp)}`);
+        
+        if(labelAngle === 30) {
+            steps.push(`\\sin 30^\\circ = \\frac{1}{2} \\quad \\cos 30^\\circ = \\frac{\\sqrt{3}}{2} \\quad \\tan 30^\\circ = \\frac{\\sqrt{3}}{3}`);
+            steps.push(`\\csc 30^\\circ = 2 \\quad \\sec 30^\\circ = \\frac{2\\sqrt{3}}{3} \\quad \\cot 30^\\circ = \\sqrt{3}`);
+        } else if (labelAngle === 60) {
+            steps.push(`\\sin 60^\\circ = \\frac{\\sqrt{3}}{2} \\quad \\cos 60^\\circ = \\frac{1}{2} \\quad \\tan 60^\\circ = \\sqrt{3}`);
+            steps.push(`\\csc 60^\\circ = \\frac{2\\sqrt{3}}{3} \\quad \\sec 60^\\circ = 2 \\quad \\cot 60^\\circ = \\frac{\\sqrt{3}}{3}`);
+        } else {
+            steps.push(`\\sin 45^\\circ = \\frac{\\sqrt{2}}{2} \\quad \\cos 45^\\circ = \\frac{\\sqrt{2}}{2} \\quad \\tan 45^\\circ = 1`);
+            steps.push(`\\csc 45^\\circ = \\sqrt{2} \\quad \\sec 45^\\circ = \\sqrt{2} \\quad \\cot 45^\\circ = 1`);
+        }
+
+        return { type: 'special_ratios', labelAngle, expected, labels, geom: { A: angleA, B: angleB, C: 90, a, b, c }, steps };
+    }
+
+    function genMultipleMethods() {
+        let targetDecimals = Math.floor(Math.random() * 2) + 1;
+        let isSide = Math.random() > 0.5;
+        let A, B, C, a, b, c, attempts = 0;
+        
+        if (isSide) {
+            let a_los, a_loc, c_rounded;
+            do {
+                A = randInt(30, 120); B = randInt(30, 120); C = 180 - A - B;
+                if (++attempts > 500) { A = 60; B = 60; C = 60; }
+                if (A < 20 || B < 20 || C < 20) continue;
+                
+                b = randInt(10, 50);
+                a_los = b * Math.sin(A * Math.PI / 180) / Math.sin(B * Math.PI / 180);
+                c = b * Math.sin(C * Math.PI / 180) / Math.sin(B * Math.PI / 180);
+                c_rounded = parseFloat(c.toFixed(2));
+                a_loc = Math.sqrt(b*b + c_rounded*c_rounded - 2*b*c_rounded*Math.cos(A * Math.PI / 180));
+                
+                if (parseFloat(a_los.toFixed(targetDecimals)) === parseFloat(a_loc.toFixed(targetDecimals))) break;
+            } while (true);
+            
+            let expected = parseFloat(a_los.toFixed(targetDecimals));
+            return {
+                type: 'multiple_methods', targetDecimals, expected, targetVariable: 'a',
+                labels: { A: A + '^\\circ', B: '', C: C + '^\\circ', a: 'x', b: b.toString(), c: c_rounded.toString(), rightAngleC: false },
+                geom: { A, B, C, a: a_los, b, c: c_rounded },
+                steps:[
+                    `\\textbf{Method 1: Law of Sines}`,
+                    `\\angle B = 180^\\circ - ${A}^\\circ - ${C}^\\circ = ${B}^\\circ`,
+                    `\\frac{a}{\\sin(A)} = \\frac{b}{\\sin(B)}`,
+                    `\\frac{a}{\\sin(${A}^\\circ)} = \\frac{${b}}{\\sin(${B}^\\circ)} \\Rightarrow a = \\frac{${b} \\cdot \\sin(${A}^\\circ)}{\\sin(${B}^\\circ)}`,
+                    `a = ${a_los.toFixed(6)}\\dots`,
+                    `a \\approx ${expected}`,
+                    `\\textbf{Method 2: Law of Cosines}`,
+                    `a^2 = b^2 + c^2 - 2bc \\cos(A)`,
+                    `a^2 = ${b}^2 + ${c_rounded}^2 - 2(${b})(${c_rounded}) \\cos(${A}^\\circ)`,
+                    `a = \\sqrt{${b}^2 + ${c_rounded}^2 - 2(${b})(${c_rounded}) \\cos(${A}^\\circ)}`,
+                    `a = \\sqrt{${(b*b).toFixed(2)} + ${(c_rounded*c_rounded).toFixed(2)} - ${(2*b*c_rounded).toFixed(2)} \\cos(${A}^\\circ)}`,
+                    `a = ${a_loc.toFixed(6)}\\dots`,
+                    `a \\approx ${expected}`
+                ]
+            };
+        } else {
+            let A_los, A_loc, c_rounded;
+            do {
+                A = randInt(30, 120); B = randInt(30, 120); C = 180 - A - B;
+                if (++attempts > 500) { A = 60; B = 60; C = 60; }
+                if (A < 20 || B < 20 || C < 20) continue;
+                
+                a = randInt(20, 50);
+                b = a * Math.sin(B * Math.PI / 180) / Math.sin(A * Math.PI / 180);
+                c = a * Math.sin(C * Math.PI / 180) / Math.sin(A * Math.PI / 180);
+                
+                c_rounded = parseFloat(c.toFixed(2));
+                let sinB = b * Math.sin(A * Math.PI / 180) / a;
+                A_los = B; 
+                
+                let cosB = (a*a + c_rounded*c_rounded - b*b) / (2 * a * c_rounded);
+                if (cosB < -1 || cosB > 1) continue;
+                A_loc = Math.acos(cosB) * 180 / Math.PI;
+                
+                if (parseFloat(A_los.toFixed(targetDecimals)) === parseFloat(A_loc.toFixed(targetDecimals))) break;
+            } while (true);
+            
+            let expected = parseFloat(A_los.toFixed(targetDecimals));
+            let sinB = b * Math.sin(A * Math.PI / 180) / a;
+            let cosB = (a*a + c_rounded*c_rounded - b*b) / (2 * a * c_rounded);
+            
+            return {
+                type: 'multiple_methods', targetDecimals, expected, targetVariable: '\\theta',
+                labels: { A: A + '^\\circ', B: '\\theta', C: '', a: a.toString(), b: parseFloat(b.toFixed(2)).toString(), c: c_rounded.toString(), rightAngleC: false },
+                geom: { A, B, C, a, b, c: c_rounded },
+                steps:[
+                    `\\textbf{Method 1: Law of Sines}`,
+                    `\\frac{\\sin(B)}{b} = \\frac{\\sin(A)}{a}`,
+                    `\\frac{\\sin(\\theta)}{${parseFloat(b.toFixed(2))}} = \\frac{\\sin(${A}^\\circ)}{${a}} \\Rightarrow \\sin(\\theta) = \\frac{${parseFloat(b.toFixed(2))} \\cdot \\sin(${A}^\\circ)}{${a}}`,
+                    `\\sin(\\theta) = ${sinB.toFixed(6)}\\dots`,
+                    `\\theta = \\sin^{-1}(${sinB.toFixed(6)}\\dots)`,
+                    `\\theta \\approx ${expected}^\\circ`,
+                    `\\textbf{Method 2: Law of Cosines}`,
+                    `\\cos(B) = \\frac{a^2 + c^2 - b^2}{2ac}`,
+                    `\\cos(\\theta) = \\frac{${a}^2 + ${c_rounded}^2 - ${parseFloat(b.toFixed(2))}^2}{2(${a})(${c_rounded})}`,
+                    `\\cos(\\theta) = \\frac{${a*a} + ${(c_rounded*c_rounded).toFixed(2)} - ${(b*b).toFixed(4)}}{${2*a*c_rounded}}`,
+                    `\\cos(\\theta) = ${cosB.toFixed(6)}\\dots`,
+                    `\\theta = \\cos^{-1}(${cosB.toFixed(6)}\\dots)`,
+                    `\\theta \\approx ${expected}^\\circ`
+                ]
+            };
+        }
+    }
+
+    function genSohCahToaSine() {
+        let targetDecimals = Math.floor(Math.random() * 3); let theta = randInt(30, 60); let solveForHyp = Math.random() > 0.5;
+        if (solveForHyp) {
+            let opp = randInt(10, 50); let hyp = opp / Math.sin(theta * Math.PI / 180);
+            return { type: 'default', targetDecimals, expected: parseFloat(hyp.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: theta + '^\\circ', B: '', C: '', a: opp.toString(), b: '', c: 'x', rightAngleC: true }, geom: { A: theta, B: 90 - theta, C: 90, a: opp, b: hyp * Math.cos(theta * Math.PI / 180), c: hyp }, steps:[ `\\sin(\\theta) = \\frac{\\text{Opposite}}{\\text{Hypotenuse}}`, `\\sin(${theta}^\\circ) = \\frac{${opp}}{x} \\Rightarrow x = \\frac{${opp}}{\\sin(${theta}^\\circ)}`, `x = ${hyp.toFixed(8)}`, `x \\approx ${hyp.toFixed(targetDecimals)}` ] };
+        } else {
+            let hyp = randInt(10, 50); let opp = hyp * Math.sin(theta * Math.PI / 180);
+            return { type: 'default', targetDecimals, expected: parseFloat(opp.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: theta + '^\\circ', B: '', C: '', a: 'x', b: '', c: hyp.toString(), rightAngleC: true }, geom: { A: theta, B: 90 - theta, C: 90, a: opp, b: hyp * Math.cos(theta * Math.PI / 180), c: hyp }, steps:[ `\\sin(\\theta) = \\frac{\\text{Opposite}}{\\text{Hypotenuse}}`, `\\sin(${theta}^\\circ) = \\frac{x}{${hyp}} \\Rightarrow x = ${hyp} \\cdot \\sin(${theta}^\\circ)`, `x = ${opp.toFixed(8)}`, `x \\approx ${opp.toFixed(targetDecimals)}` ] };
+        }
+    }
+    function genSohCahToaCosine() {
+        let targetDecimals = Math.floor(Math.random() * 3); let theta = randInt(30, 60); let solveForHyp = Math.random() > 0.5;
+        if (solveForHyp) {
+            let adj = randInt(10, 50); let hyp = adj / Math.cos(theta * Math.PI / 180);
+            return { type: 'default', targetDecimals, expected: parseFloat(hyp.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: theta + '^\\circ', B: '', C: '', a: '', b: adj.toString(), c: 'x', rightAngleC: true }, geom: { A: theta, B: 90 - theta, C: 90, a: hyp * Math.sin(theta * Math.PI / 180), b: adj, c: hyp }, steps:[ `\\cos(\\theta) = \\frac{\\text{Adjacent}}{\\text{Hypotenuse}}`, `\\cos(${theta}^\\circ) = \\frac{${adj}}{x} \\Rightarrow x = \\frac{${adj}}{\\cos(${theta}^\\circ)}`, `x = ${hyp.toFixed(8)}`, `x \\approx ${hyp.toFixed(targetDecimals)}` ] };
+        } else {
+            let hyp = randInt(10, 50); let adj = hyp * Math.cos(theta * Math.PI / 180);
+            return { type: 'default', targetDecimals, expected: parseFloat(adj.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: theta + '^\\circ', B: '', C: '', a: '', b: 'x', c: hyp.toString(), rightAngleC: true }, geom: { A: theta, B: 90 - theta, C: 90, a: hyp * Math.sin(theta * Math.PI / 180), b: adj, c: hyp }, steps:[ `\\cos(\\theta) = \\frac{\\text{Adjacent}}{\\text{Hypotenuse}}`, `\\cos(${theta}^\\circ) = \\frac{x}{${hyp}} \\Rightarrow x = ${hyp} \\cdot \\cos(${theta}^\\circ)`, `x = ${adj.toFixed(8)}`, `x \\approx ${adj.toFixed(targetDecimals)}` ] };
+        }
+    }
+    function genSohCahToaTangent() {
+        let targetDecimals = Math.floor(Math.random() * 3); let theta = randInt(30, 60); let solveForAdj = Math.random() > 0.5;
+        if (solveForAdj) {
+            let opp = randInt(10, 50); let adj = opp / Math.tan(theta * Math.PI / 180);
+            return { type: 'default', targetDecimals, expected: parseFloat(adj.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: theta + '^\\circ', B: '', C: '', a: opp.toString(), b: 'x', c: '', rightAngleC: true }, geom: { A: theta, B: 90 - theta, C: 90, a: opp, b: adj, c: Math.hypot(adj, opp) }, steps:[ `\\tan(\\theta) = \\frac{\\text{Opposite}}{\\text{Adjacent}}`, `\\tan(${theta}^\\circ) = \\frac{${opp}}{x} \\Rightarrow x = \\frac{${opp}}{\\tan(${theta}^\\circ)}`, `x = ${adj.toFixed(8)}`, `x \\approx ${adj.toFixed(targetDecimals)}` ] };
+        } else {
+            let adj = randInt(10, 50); let opp = adj * Math.tan(theta * Math.PI / 180);
+            return { type: 'default', targetDecimals, expected: parseFloat(opp.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: theta + '^\\circ', B: '', C: '', a: 'x', b: adj.toString(), c: '', rightAngleC: true }, geom: { A: theta, B: 90 - theta, C: 90, a: opp, b: adj, c: Math.hypot(adj, opp) }, steps:[ `\\tan(\\theta) = \\frac{\\text{Opposite}}{\\text{Adjacent}}`, `\\tan(${theta}^\\circ) = \\frac{x}{${adj}} \\Rightarrow x = ${adj} \\cdot \\tan(${theta}^\\circ)`, `x = ${opp.toFixed(8)}`, `x \\approx ${opp.toFixed(targetDecimals)}` ] };
+        }
+    }
+    function genSohCahToaInvSine() {
+        let targetDecimals = Math.floor(Math.random() * 3);
+        let hyp = randInt(20, 50), opp = randInt(5, hyp - 5);
+        let theta_rad = Math.asin(opp / hyp), theta_deg = theta_rad * 180 / Math.PI;
+        return { type: 'default', targetDecimals, expected: parseFloat(theta_deg.toFixed(targetDecimals)), targetVariable: '\\theta', labels: { A: '\\theta', B: '', C: '', a: opp.toString(), b: '', c: hyp.toString(), rightAngleC: true }, geom: { A: theta_deg, B: 90 - theta_deg, C: 90, a: opp, b: hyp * Math.cos(theta_rad), c: hyp }, steps:[ `\\sin(\\theta) = \\frac{\\text{Opposite}}{\\text{Hypotenuse}}`, `\\sin(\\theta) = \\frac{${opp}}{${hyp}}`, `\\sin(\\theta) = ${formatDec(opp/hyp)}`, `\\theta = \\sin^{-1}(${formatDec(opp/hyp)})`, `\\theta = ${formatDec(theta_deg)}^\\circ`, `\\theta \\approx ${theta_deg.toFixed(targetDecimals)}^\\circ` ] };
+    }
+    function genSohCahToaInvCosine() {
+        let targetDecimals = Math.floor(Math.random() * 3);
+        let hyp = randInt(20, 50), adj = randInt(5, hyp - 5);
+        let theta_rad = Math.acos(adj / hyp), theta_deg = theta_rad * 180 / Math.PI;
+        return { type: 'default', targetDecimals, expected: parseFloat(theta_deg.toFixed(targetDecimals)), targetVariable: '\\theta', labels: { A: '\\theta', B: '', C: '', a: '', b: adj.toString(), c: hyp.toString(), rightAngleC: true }, geom: { A: theta_deg, B: 90 - theta_deg, C: 90, a: Math.sqrt(hyp*hyp - adj*adj), b: adj, c: hyp }, steps:[ `\\cos(\\theta) = \\frac{\\text{Adjacent}}{\\text{Hypotenuse}}`, `\\cos(\\theta) = \\frac{${adj}}{${hyp}}`, `\\cos(\\theta) = ${formatDec(adj/hyp)}`, `\\theta = \\cos^{-1}(${formatDec(adj/hyp)})`, `\\theta = ${formatDec(theta_deg)}^\\circ`, `\\theta \\approx ${theta_deg.toFixed(targetDecimals)}^\\circ` ] };
+    }
+    function genSohCahToaInvTangent() {
+        let targetDecimals = Math.floor(Math.random() * 3);
+        let opp = randInt(10, 50), adj = randInt(10, 50);
+        let theta_deg = Math.atan(opp / adj) * 180 / Math.PI;
+        return { type: 'default', targetDecimals, expected: parseFloat(theta_deg.toFixed(targetDecimals)), targetVariable: '\\theta', labels: { A: '\\theta', B: '', C: '', a: opp.toString(), b: adj.toString(), c: '', rightAngleC: true }, geom: { A: theta_deg, B: 90 - theta_deg, C: 90, a: opp, b: adj, c: Math.hypot(opp, adj) }, steps:[ `\\tan(\\theta) = \\frac{\\text{Opposite}}{\\text{Adjacent}}`, `\\tan(\\theta) = \\frac{${opp}}{${adj}}`, `\\tan(\\theta) = ${formatDec(opp/adj)}`, `\\theta = \\tan^{-1}(${formatDec(opp/adj)})`, `\\theta = ${formatDec(theta_deg)}^\\circ`, `\\theta \\approx ${theta_deg.toFixed(targetDecimals)}^\\circ` ] };
+    }
+    function genLawOfSinesDirect() {
+        let targetDecimals = Math.floor(Math.random() * 3); let A=60, B=60, C=60, a=20, b;
+        do { A = randInt(30, 120); B = randInt(30, 120); C = 180 - A - B; } while(!validAngles(A, B, C));
+        a = randInt(10, 50); b = a * Math.sin(B * Math.PI / 180) / Math.sin(A * Math.PI / 180);
+        return { type: 'default', targetDecimals, expected: parseFloat(b.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: A + '^\\circ', B: B + '^\\circ', C: '', a: a.toString(), b: 'x', c: '', rightAngleC: false }, geom: { A, B, C, a, b, c: a * Math.sin(C * Math.PI / 180) / Math.sin(A * Math.PI / 180) }, steps:[ `\\frac{a}{\\sin(A)} = \\frac{b}{\\sin(B)}`, `\\frac{${a}}{\\sin(${A}^\\circ)} = \\frac{x}{\\sin(${B}^\\circ)} \\Rightarrow x = \\frac{${a} \\cdot \\sin(${B}^\\circ)}{\\sin(${A}^\\circ)}`, `x = ${b.toFixed(8)}`, `x \\approx ${b.toFixed(targetDecimals)}` ] };
+    }
+    function genLawOfSinesIndirect() {
+        let targetDecimals = Math.floor(Math.random() * 3); let A=60, B=60, C=60, c=20, a;
+        do { A = randInt(30, 120); B = randInt(30, 120); C = 180 - A - B; } while(!validAngles(A, B, C));
+        c = randInt(10, 50); a = c * Math.sin(A * Math.PI / 180) / Math.sin(C * Math.PI / 180);
+        return { type: 'default', targetDecimals, expected: parseFloat(a.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: A + '^\\circ', B: B + '^\\circ', C: '', a: 'x', b: '', c: c.toString(), rightAngleC: false }, geom: { A, B, C, a, b: c * Math.sin(B * Math.PI / 180) / Math.sin(C * Math.PI / 180), c }, steps:[ `\\angle C = 180^\\circ - \\angle A - \\angle B`, `\\angle C = 180^\\circ - ${A}^\\circ - ${B}^\\circ = ${C}^\\circ`, `\\frac{c}{\\sin(C)} = \\frac{a}{\\sin(A)}`, `\\frac{${c}}{\\sin(${C}^\\circ)} = \\frac{x}{\\sin(${A}^\\circ)} \\Rightarrow x = \\frac{${c} \\cdot \\sin(${A}^\\circ)}{\\sin(${C}^\\circ)}`, `x = ${a.toFixed(8)}`, `x \\approx ${a.toFixed(targetDecimals)}` ] };
+    }
+    function genLawOfSinesAngle() {
+        let targetDecimals = Math.floor(Math.random() * 3); let a, b, A, B, C, sinB;
+        do { a = randInt(20, 50); b = randInt(20, a - 1); A = randInt(60, 120); sinB = (b * Math.sin(A * Math.PI / 180)) / a; B = Math.asin(sinB) * 180 / Math.PI; C = 180 - A - B; } while(!validAngles(A, B, C));
+        return { type: 'default', targetDecimals, expected: parseFloat(B.toFixed(targetDecimals)), targetVariable: '\\theta', labels: { A: A + '^\\circ', B: '\\theta', C: '', a: a.toString(), b: b.toString(), c: '', rightAngleC: false }, geom: { A, B, C, a, b, c: a * Math.sin(C * Math.PI / 180) / Math.sin(A * Math.PI / 180) }, steps:[ `\\frac{\\sin(A)}{a} = \\frac{\\sin(B)}{b}`, `\\frac{\\sin(\\theta)}{${b}} = \\frac{\\sin(${A}^\\circ)}{${a}}`, `\\sin(\\theta) = \\frac{${b} \\cdot \\sin(${A}^\\circ)}{${a}}`, `\\sin(\\theta) = ${formatDec(sinB)}`, `\\theta = \\sin^{-1}(${formatDec(sinB)})`, `\\theta = ${formatDec(B)}^\\circ`, `\\theta \\approx ${B.toFixed(targetDecimals)}^\\circ` ] };
+    }
+    function genLawOfCosinesSide() {
+        let targetDecimals = Math.floor(Math.random() * 3); let a, b, C_deg, c, A, B;
+        do { a = randInt(10, 30); b = randInt(10, 30); C_deg = randInt(30, 120); c = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(C_deg * Math.PI / 180)); A = Math.acos((b*b + c*c - a*a)/(2*b*c)) * 180 / Math.PI; B = 180 - A - C_deg; } while(!validAngles(A, B, C_deg));
+        return { type: 'default', targetDecimals, expected: parseFloat(c.toFixed(targetDecimals)), targetVariable: 'x', labels: { A: '', B: '', C: C_deg + '^\\circ', a: a.toString(), b: b.toString(), c: 'x', rightAngleC: false }, geom: { A, B, C: C_deg, a, b, c }, steps:[ `c^2 = a^2 + b^2 - 2ab \\cos(C)`, `x = \\sqrt{${a}^2 + ${b}^2 - 2(${a})(${b}) \\cos(${C_deg}^\\circ)}`, `x = ${c.toFixed(8)}`, `x \\approx ${c.toFixed(targetDecimals)}` ] };
+    }
+    function genLawOfCosinesAngle() {
+        let targetDecimals = Math.floor(Math.random() * 3); let a, b, c, A, B, C_deg;
+        do { a = randInt(10, 30); b = randInt(10, 30); c = randInt(Math.abs(a - b) + 1, a + b - 1); C_deg = Math.acos((a*a + b*b - c*c)/(2*a*b)) * 180 / Math.PI; A = Math.acos((b*b + c*c - a*a)/(2*b*c)) * 180 / Math.PI; B = 180 - A - C_deg; } while(!validAngles(A, B, C_deg));
+        let num = a*a + b*b - c*c, den = 2*a*b;
+        return { type: 'default', targetDecimals, expected: parseFloat(C_deg.toFixed(targetDecimals)), targetVariable: '\\theta', labels: { A: '', B: '', C: '\\theta', a: a.toString(), b: b.toString(), c: c.toString(), rightAngleC: false }, geom: { A, B, C: C_deg, a, b, c }, steps:[ `\\cos C = \\frac{a^2 + b^2 - c^2}{2ab}`, `\\cos \\theta = \\frac{${a}^2 + ${b}^2 - ${c}^2}{2(${a})(${b})}`, `\\cos \\theta = \\frac{${num}}{${den}}`, `\\cos \\theta = ${formatDec(num/den)}`, `\\theta = \\cos^{-1}(${formatDec(num/den)})`, `\\theta = ${formatDec(C_deg)}^\\circ`, `\\theta \\approx ${C_deg.toFixed(targetDecimals)}^\\circ` ] };
+    }
+
+    function genDetMethod(testMode = false) {
+        let pool =[
+            { name: 'Sum of angles of triangle', gen: genSumOfAngles },
+            { name: 'Pythagorean Theorem', gen: genPythagorean },
+            { name: 'Sine Ratio', gen: () => { let p = genSohCahToaSine(); p.labels.C=''; p.labels.rightAngleC=true; return p; } },
+            { name: 'Cosine Ratio', gen: () => { let p = genSohCahToaCosine(); p.labels.C=''; p.labels.rightAngleC=true; return p; } },
+            { name: 'Tangent Ratio', gen: () => { let p = genSohCahToaTangent(); p.labels.C=''; p.labels.rightAngleC=true; return p; } },
+            { name: 'Law of Sines', gen: () => { let p = genLawOfSinesDirect(); return p; } },
+            { name: 'Law of Cosines', gen: () => { let p = genLawOfCosinesSide(); return p; } }
+        ];
+        let subProbs =[];
+        if (testMode) {
+            let sohcahtoa = shuffle([pool[2], pool[3], pool[4]])[0];
+            let laws = shuffle([pool[5], pool[6]])[0];
+            subProbs =[sohcahtoa, laws];
+            subProbs = subProbs.map(m => { let p = m.gen(); return { geom: p.geom, labels: p.labels, expectedMethod: m.name }; });
+            shuffle(subProbs);
+        } else {
+            subProbs = pool.map(m => { let p = m.gen(); return { geom: p.geom, labels: p.labels, expectedMethod: m.name }; });
+            shuffle(subProbs);
+        }
+        return { type: 'determine_method', subProbs, steps: subProbs.map((sp, i) => `\\text{Triangle ${i+1}: The correct method is } \\text{${sp.expectedMethod}}.`) };
+    }
+
+    /* =======================================
+       VANILLA SVG DRAWING ENGINE
+       ======================================= */
+    function generateSVG(prob, idPrefix = '') {
+        let { geom, labels } = prob;
+        let { a, b, c, C } = geom;
+        
+        let vC = {x: 0, y: 0}, vB = {x: a, y: 0}, vA = {x: 0, y: 0};
+        
+        if (labels.rightAngleC) {
+            vA = {x: 0, y: -b};
+            
+            let orient = Math.floor(Math.random() * 8);
+            let transformVertex = (v) => {
+                let x = v.x, y = v.y;
+                if (orient & 1) { let t = x; x = y; y = t; } 
+                if (orient & 2) x = -x; 
+                if (orient & 4) y = -y; 
+                return { x, y };
+            };
+            vA = transformVertex(vA); vB = transformVertex(vB); vC = transformVertex(vC);
+        } else {
+            vA = {x: b * Math.cos(C * Math.PI / 180), y: -b * Math.sin(C * Math.PI / 180)};
+            
+            let sideToHorizontal = randInt(0, 2); 
+            let angle = 0;
+            if (sideToHorizontal === 1) angle = Math.atan2(vA.y - vC.y, vA.x - vC.x);
+            else if (sideToHorizontal === 2) angle = Math.atan2(vB.y - vA.y, vB.x - vA.x);
+            
+            let rot = (v) => {
+                let cos = Math.cos(-angle), sin = Math.sin(-angle);
+                return { x: v.x * cos - v.y * sin, y: v.x * sin + v.y * cos };
+            };
+            vA = rot(vA); vB = rot(vB); vC = rot(vC);
+            
+            let flipX = Math.random() > 0.5 ? -1 : 1;
+            let flipY = Math.random() > 0.5 ? -1 : 1;
+            vA = { x: vA.x * flipX, y: vA.y * flipY };
+            vB = { x: vB.x * flipX, y: vB.y * flipY };
+            vC = { x: vC.x * flipX, y: vC.y * flipY };
+        }
+
+        let minX = Math.min(vA.x, vB.x, vC.x), maxX = Math.max(vA.x, vB.x, vC.x);
+        let minY = Math.min(vA.y, vB.y, vC.y), maxY = Math.max(vA.y, vB.y, vC.y);
+
+        let svgW = 450, svgH = 300, padding = 65;
+        let scale = Math.min((svgW - padding*2) / (maxX - minX), (svgH - padding*2) / (maxY - minY));
+        let cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+        
+        const transform = pt => ({ x: (pt.x - cx) * scale + svgW / 2, y: (pt.y - cy) * scale + svgH / 2 });
+        let pA = transform(vA), pB = transform(vB), pC = transform(vC);
+        let centroid = { x: (pA.x + pB.x + pC.x)/3, y: (pA.y + pB.y + pC.y)/3 };
+
+        const formatLabel = (txt) => {
+            let isVar = txt === 'x' || txt === '\\theta';
+            let color = isVar ? '#e74c3c' : '#2c3e50';
+            if(txt.includes('\\theta') || txt.includes('^\\circ')) {
+                let cleanTxt = txt.replace('\\theta', 'θ').replace('^\\circ', '°');
+                return `<tspan fill="${color}" font-weight="${isVar ? 'bold' : 'normal'}">${cleanTxt}</tspan>`;
+            }
+            return `<tspan fill="${color}" font-weight="${isVar ? 'bold' : 'normal'}">${txt}</tspan>`;
+        };
+
+        let svg = `<svg viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">`;
+        svg += `<polygon points="${pA.x},${pA.y} ${pB.x},${pB.y} ${pC.x},${pC.y}" fill="rgba(0,0,0,0.03)" stroke="#c2185b" stroke-width="3" stroke-linejoin="round" />`;
+
+        if (labels.rightAngleC) {
+            let size = 18;
+            let d1 = Math.hypot(pA.x - pC.x, pA.y - pC.y), d2 = Math.hypot(pB.x - pC.x, pB.y - pC.y);
+            let u1 = {x: (pA.x - pC.x)/d1, y: (pA.y - pC.y)/d1}, u2 = {x: (pB.x - pC.x)/d2, y: (pB.y - pC.y)/d2};
+            let s1 = {x: pC.x + size*u1.x, y: pC.y + size*u1.y};
+            let s2 = {x: pC.x + size*(u1.x+u2.x), y: pC.y + size*(u1.y+u2.y)};
+            let s3 = {x: pC.x + size*u2.x, y: pC.y + size*u2.y};
+            svg += `<polygon points="${pC.x},${pC.y} ${s1.x},${s1.y} ${s2.x},${s2.y} ${s3.x},${s3.y}" fill="none" stroke="#e74c3c" stroke-width="2" />`;
+        }
+
+        const drawAngleArc = (V, V1, V2, txt) => {
+            if (!txt) return;
+            let r = 28;
+            let d1 = Math.hypot(V1.x - V.x, V1.y - V.y), d2 = Math.hypot(V2.x - V.x, V2.y - V.y);
+            let u1 = {x: (V1.x - V.x)/d1, y: (V1.y - V.y)/d1}, u2 = {x: (V2.x - V.x)/d2, y: (V2.y - V.y)/d2};
+            let sweep = (u1.x * u2.y - u1.y * u2.x) > 0 ? 1 : 0;
+            let sX = V.x + r * u1.x, sY = V.y + r * u1.y, eX = V.x + r * u2.x, eY = V.y + r * u2.y;
+            svg += `<path d="M ${sX} ${sY} A ${r} ${r} 0 0 ${sweep} ${eX} ${eY}" fill="none" stroke="#2980b9" stroke-width="2" />`;
+            
+            let bL = Math.hypot(u1.x + u2.x, u1.y + u2.y);
+            let lx = V.x + ((u1.x + u2.x)/bL) * (r + 18), ly = V.y + ((u1.y + u2.y)/bL) * (r + 18);
+            svg += `<text x="${lx}" y="${ly}" font-family="Arial" font-size="20" text-anchor="middle" dominant-baseline="middle">${formatLabel(txt)}</text>`;
+        };
+
+        if (!labels.rightAngleC) drawAngleArc(pC, pA, pB, labels.C);
+        drawAngleArc(pA, pC, pB, labels.A);
+        drawAngleArc(pB, pC, pA, labels.B);
+
+        let overlays = '';
+        const drawSideLabel = (p1, p2, labelObj) => {
+            if (!labelObj) return;
+            let dx = p2.x - p1.x, dy = p2.y - p1.y, l = Math.hypot(dx, dy);
+            let nx = -dy / l, ny = dx / l, mx = (p1.x + p2.x)/2, my = (p1.y + p2.y)/2;
+            if (nx * (mx - centroid.x) + ny * (my - centroid.y) < 0) { nx = -nx; ny = -ny; }
+            
+            let lx = mx + nx * 25;
+            let ly = my + ny * 25;
+
+            if (typeof labelObj === 'string') {
+                svg += `<text x="${lx}" y="${ly}" font-family="Arial" font-size="20" text-anchor="middle" dominant-baseline="middle">${formatLabel(labelObj)}</text>`;
+            } else if (labelObj.type === 'select') {
+                let finalId = idPrefix ? `${idPrefix}${labelObj.id}` : labelObj.id;
+                let leftPct = (lx / svgW) * 100;
+                let topPct = (ly / svgH) * 100;
+                
+                overlays += `
+                <div style="position:absolute; left:calc(${leftPct}% - 40px); top:calc(${topPct}% - 20px); width:80px; z-index:50;">
+                    <div class="custom-select" id="${finalId}" data-value="" style="width:100%; border-color:#3498db; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                        <div class="custom-select-trigger" style="min-height:30px; padding:2px; font-size:14px;"><span style="color:#7f8c8d;">...</span></div>
+                        <div class="custom-options" style="font-size:16px; min-width:80px;">
+                            <div class="custom-option" data-value="1">1</div>
+                            <div class="custom-option" data-value="2">2</div>
+                            <div class="custom-option" data-value="sqrt(2)"><span class="math inline-math" data-tex="\\sqrt{2}"></span></div>
+                            <div class="custom-option" data-value="sqrt(3)"><span class="math inline-math" data-tex="\\sqrt{3}"></span></div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        };
+
+        drawSideLabel(pB, pC, labels.a);
+        drawSideLabel(pA, pC, labels.b);
+        drawSideLabel(pA, pB, labels.c);
+        
+        svg += `</svg>`;
+        return `<div class="svg-container"><div class="svg-inner-wrapper">${svg}${overlays}</div></div>`;
+    }
+
+    /* =======================================
+       APP LOGIC & STATE
+       ======================================= */
+    let currentMode = 'practice';
+    let currentPracticeProb = null, practiceTries = 0;
+    let testProbs =[], testStartTime = null, testEndTime = null, testScore = 0;
+
+    const integrityQuotes =[
+        { q: "“Your grade is temporary. Your integrity is permanent.”", s: "A score lasts a school year. Character lasts a lifetime." },
+        { q: "“Cheating may raise your score, but it lowers your standards.”", s: "Success without honesty isn’t success." }
+    ];
+
+    function displayRandomQuote() {
+        let qObj = integrityQuotes[Math.floor(Math.random() * integrityQuotes.length)];
+        document.getElementById('testQuote').innerText = qObj.q;
+        document.getElementById('testSubtitle').innerText = qObj.s;
+    }
+
+    function renderMath() {
+        document.querySelectorAll('.math, .inline-math').forEach(el => {
+            if(el.hasAttribute('data-tex')) katex.render(el.getAttribute('data-tex'), el, {throwOnError: false});
+        });
+    }
+
+    function switchMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab')[mode === 'practice' ? 0 : 1].classList.add('active');
+        document.getElementById(mode + '-section').classList.add('active');
+    }
+
+    function getPlainLabel(k, ang) {
+        let textAng = ang === '\\theta' ? '&theta;' : ang.replace('^\\circ', '&deg;');
+        return `${k} ${textAng} =`;
+    }
+
+    function renderInteractionArea(prob, idPrefix) {
+        if (prob.type === 'default' || prob.type === 'multiple_methods') {
+            return `
+                <div class="input-wrapper">
+                    <input type="number" id="${idPrefix}Ans" placeholder="Your exact answer..." step="any">
+                </div>`;
+        } else if (prob.type === 'six_ratios') {
+            return `
+                <p style="text-align:center; margin-bottom: 5px; color: #7f8c8d; font-size: 0.9em;">(Type "/" or use the button to input fractions. Exact answers only.)</p>
+                <div class="trig-grid">
+                    <div class="trig-col">
+                        ${['sin', 'cos', 'tan'].map(k => `
+                            <div class="trig-row">
+                                <span class="trig-label">${getPlainLabel(k, prob.angleLabel)}</span>
+                                <math-field class="trig-field" id="${idPrefix}${k}"></math-field>
+                                <button type="button" class="frac-btn" onclick="document.getElementById('${idPrefix}${k}').insert('\\\\frac{#0}{#?}')">/</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="trig-col">
+                        ${['csc', 'sec', 'cot'].map(k => `
+                            <div class="trig-row">
+                                <span class="trig-label">${getPlainLabel(k, prob.angleLabel)}</span>
+                                <math-field class="trig-field" id="${idPrefix}${k}"></math-field>
+                                <button type="button" class="frac-btn" onclick="document.getElementById('${idPrefix}${k}').insert('\\\\frac{#0}{#?}')">/</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+        } else if (prob.type === 'special_ratios') {
+            let optionsHtml = `
+                <div class="custom-option" data-value="1/2"><span class="math inline-math" data-tex="\\frac{1}{2}"></span></div>
+                <div class="custom-option" data-value="sqrt(3)/3"><span class="math inline-math" data-tex="\\frac{\\sqrt{3}}{3}"></span></div>
+                <div class="custom-option" data-value="sqrt(2)/2"><span class="math inline-math" data-tex="\\frac{\\sqrt{2}}{2}"></span></div>
+                <div class="custom-option" data-value="sqrt(3)/2"><span class="math inline-math" data-tex="\\frac{\\sqrt{3}}{2}"></span></div>
+                <div class="custom-option" data-value="1"><span class="math inline-math" data-tex="1"></span></div>
+                <div class="custom-option" data-value="2sqrt(3)/3"><span class="math inline-math" data-tex="\\frac{2\\sqrt{3}}{3}"></span></div>
+                <div class="custom-option" data-value="sqrt(2)"><span class="math inline-math" data-tex="\\sqrt{2}"></span></div>
+                <div class="custom-option" data-value="sqrt(3)"><span class="math inline-math" data-tex="\\sqrt{3}"></span></div>
+                <div class="custom-option" data-value="2"><span class="math inline-math" data-tex="2"></span></div>
+            `;
+            
+            return `
+                <p style="text-align:center; margin-bottom: 5px; color: #7f8c8d; font-size: 0.9em;">(Label the sides on the triangle above, then select the exact ratios below.)</p>
+                <div class="trig-grid" style="margin-top:15px;">
+                    <div class="trig-col">
+                        ${['sin', 'cos', 'tan'].map(k => `
+                            <div class="trig-row">
+                                <span class="trig-label" style="width: 80px; flex: 0 0 80px;">${getPlainLabel(k, prob.labelAngle + '^\\circ')}</span>
+                                <div class="custom-select" id="${idPrefix}${k}" data-value="" style="width: 130px; flex: 0 0 130px;">
+                                    <div class="custom-select-trigger"><span style="color:#7f8c8d;">Select...</span></div>
+                                    <div class="custom-options">${optionsHtml}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="trig-col">
+                        ${['csc', 'sec', 'cot'].map(k => `
+                            <div class="trig-row">
+                                <span class="trig-label" style="width: 80px; flex: 0 0 80px;">${getPlainLabel(k, prob.labelAngle + '^\\circ')}</span>
+                                <div class="custom-select" id="${idPrefix}${k}" data-value="" style="width: 130px; flex: 0 0 130px;">
+                                    <div class="custom-select-trigger"><span style="color:#7f8c8d;">Select...</span></div>
+                                    <div class="custom-options">${optionsHtml}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+        } else if (prob.type === 'determine_method') {
+            let html = '';
+            prob.subProbs.forEach((sp, i) => {
+                html += `
+                    <div style="margin-bottom: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 15px; width: 100%;">
+                        <p style="font-weight:bold; text-align:center; margin-top: 0;">Triangle ${i+1}</p>
+                        ${generateSVG({geom: sp.geom, labels: sp.labels})}
+                        <div style="text-align:center; margin-top:15px;">
+                            <select id="${idPrefix}method_${i}" style="width: 100%; max-width: 300px; padding: 12px 15px; font-size: 16px; border: 2px solid #bdc3c7; border-radius: 6px; outline: none;">
+                                <option value="">Select Method...</option>
+                                <option value="Sum of angles of triangle">Sum of angles of triangle</option>
+                                <option value="Pythagorean Theorem">Pythagorean Theorem</option>
+                                <option value="Sine Ratio">Sine Ratio</option>
+                                <option value="Cosine Ratio">Cosine Ratio</option>
+                                <option value="Tangent Ratio">Tangent Ratio</option>
+                                <option value="Law of Sines">Law of Sines</option>
+                                <option value="Law of Cosines">Law of Cosines</option>
+                            </select>
+                        </div>
+                    </div>`;
+            });
+            return html;
+        }
+    }
+
+    function verifyAnswer(prob, idPrefix) {
+        if (prob.type === 'default' || prob.type === 'multiple_methods') {
+            let val = document.getElementById(`${idPrefix}Ans`).value.trim();
+            if (val === '') return { complete: false, correct: false };
+            let studentAnswer = parseFloat(val);
+            return { complete: true, correct: studentAnswer === prob.expected };
+        } else if (prob.type === 'six_ratios') {
+            let keys =['sin', 'cos', 'tan', 'csc', 'sec', 'cot'];
+            let complete = keys.every(k => document.getElementById(`${idPrefix}${k}`).value !== '');
+            if (!complete) return { complete: false, correct: false };
+            let correct = keys.every(k => checkMathLive(`${idPrefix}${k}`, prob.expected[k], 1, false, false));
+            return { complete: true, correct };
+        } else if (prob.type === 'special_ratios') {
+            let keys =['opp', 'adj', 'hyp', 'sin', 'cos', 'tan', 'csc', 'sec', 'cot'];
+            let complete = keys.every(k => {
+                let el = document.getElementById(`${idPrefix}${k}`);
+                return el && el.getAttribute('data-value') !== '';
+            });
+            if (!complete) return { complete: false, correct: false };
+            let correct = keys.every(k => document.getElementById(`${idPrefix}${k}`).getAttribute('data-value') === prob.expected[k]);
+            return { complete: true, correct };
+        } else if (prob.type === 'determine_method') {
+            let complete = prob.subProbs.every((_, i) => document.getElementById(`${idPrefix}method_${i}`).value !== '');
+            if (!complete) return { complete: false, correct: false };
+            let correct = prob.subProbs.every((sp, i) => document.getElementById(`${idPrefix}method_${i}`).value === sp.expectedMethod);
+            return { complete: true, correct };
+        }
+    }
+
+    function disableInteractionArea(prob, idPrefix) {
+        if (prob.type === 'default' || prob.type === 'multiple_methods') {
+            document.getElementById(`${idPrefix}Ans`).disabled = true;
+        } else if (prob.type === 'six_ratios') {['sin', 'cos', 'tan', 'csc', 'sec', 'cot'].forEach(k => document.getElementById(`${idPrefix}${k}`).disabled = true);
+        } else if (prob.type === 'special_ratios') {['opp', 'adj', 'hyp', 'sin', 'cos', 'tan', 'csc', 'sec', 'cot'].forEach(k => {
+                let el = document.getElementById(`${idPrefix}${k}`);
+                if (el) { el.style.pointerEvents = 'none'; el.style.opacity = '0.7'; }
+            });
+        } else if (prob.type === 'determine_method') {
+            prob.subProbs.forEach((_, i) => document.getElementById(`${idPrefix}method_${i}`).disabled = true);
+        }
+    }
+
+    // --- PRACTICE MODE ---
+    function generatePracticeQuestion() {
+        let topic = document.getElementById('practiceTopic').value;
+        let pool =[];
+        
+        if (topic === 'SOHCAHTOA (missing side)' || topic === 'Random') pool.push(genSohCahToaSine, genSohCahToaCosine, genSohCahToaTangent);
+        if (topic === 'SOHCAHTOA (missing angle)' || topic === 'Random') pool.push(genSohCahToaInvSine, genSohCahToaInvCosine, genSohCahToaInvTangent);
+        if (topic === 'Pythagorean Theorem' || topic === 'Random') pool.push(genPythagorean);
+        if (topic === 'Sum of Angles of Triangle' || topic === 'Random') pool.push(genSumOfAngles);
+        if (topic === 'Six Trig Ratios' || topic === 'Random') pool.push(genSixTrigRatios);
+        if (topic === 'Six Trig Ratios of Special Angles' || topic === 'Random') pool.push(genSpecialAngles);
+        if (topic === 'Determining the Correct Method' || topic === 'Random') pool.push(() => genDetMethod(false));
+        if (topic === 'Law of Sines (missing side)' || topic === 'Random') pool.push(genLawOfSinesDirect, genLawOfSinesIndirect);
+        if (topic === 'Law of Sines (missing angle)' || topic === 'Random') pool.push(genLawOfSinesAngle);
+        if (topic === 'Law of Cosines (missing side)' || topic === 'Random') pool.push(genLawOfCosinesSide);
+        if (topic === 'Law of Cosines (missing angle)' || topic === 'Random') pool.push(genLawOfCosinesAngle);
+        if (topic === 'Law of Sines or Law of Cosines multiple methods' || topic === 'Random') pool.push(genMultipleMethods);
+        if (topic === 'Random Law of Sines or Law of Cosines') pool.push(genLawOfSinesDirect, genLawOfSinesIndirect, genLawOfSinesAngle, genLawOfCosinesSide, genLawOfCosinesAngle, genMultipleMethods);
+        
+        currentPracticeProb = pool[Math.floor(Math.random() * pool.length)]();
+        practiceTries = 0;
+        
+        document.getElementById('practiceContent').style.display = 'block';
+        document.getElementById('practiceInstruction').innerText = getInstruction(currentPracticeProb);
+        
+        let isMainSvgHidden = (currentPracticeProb.type === 'determine_method');
+        document.getElementById('practiceSvg').style.display = isMainSvgHidden ? 'none' : 'block';
+        if(!isMainSvgHidden) document.getElementById('practiceSvg').innerHTML = generateSVG(currentPracticeProb, 'practice-ans-');
+        
+        document.getElementById('practiceInteraction').innerHTML = renderInteractionArea(currentPracticeProb, 'practice-ans-');
+        
+        renderMath();
+        initCustomSelects();
+        
+        document.getElementById('practiceCheckBtn').disabled = false;
+        document.getElementById('practiceMsg').innerHTML = '';
+        document.getElementById('practiceSolution').style.display = 'none';
+    }
+
+    function checkPracticeAnswer() {
+        let status = verifyAnswer(currentPracticeProb, 'practice-ans-');
+        
+        if (status.complete && status.correct) {
+            document.getElementById('practiceMsg').innerHTML = '<span style="color:#2ecc71;">Correct! Great job!</span>';
+            showPracticeSolution();
+        } else {
+            practiceTries++;
+            if (practiceTries === 1) {
+                document.getElementById('practiceMsg').innerHTML = '<span style="color:#e74c3c;">Incorrect (or incomplete). Please try again!</span>';
+            } else {
+                document.getElementById('practiceMsg').innerHTML = '<span style="color:#e74c3c;">Incorrect (or incomplete). Here is the exact solution.</span>';
+                showPracticeSolution();
+            }
+        }
+    }
+
+    function showPracticeSolution() {
+        disableInteractionArea(currentPracticeProb, 'practice-ans-');
+        document.getElementById('practiceCheckBtn').disabled = true;
+        let sol = document.getElementById('practiceSolution');
+        sol.style.display = 'block';
+        sol.innerHTML = `<h4>Step-by-step Solution:</h4>` + currentPracticeProb.steps.map(s => `<div class="math" data-tex="${s}"></div>`).join('');
+        renderMath();
+    }
+
+    // --- TEST MODE ---
+    function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+    function resetTest() {
+        if (testEndTime === null && testProbs.length > 0) {
+            if (!confirm("Are you sure you want to abandon the current test?")) return;
+        }
+        document.getElementById('testSetup').style.display = '';
+        document.getElementById('testContainer').style.display = 'none';
+        document.getElementById('testContainer').innerHTML = ''; 
+        testProbs =[]; testStartTime = null; testEndTime = null; testScore = 0;
+        displayRandomQuote(); 
+    }
+
+    function startTest() {
+        let name = document.getElementById('studentName').value.trim();
+        if (!name) return alert("Please enter your name before starting the test.");
+        let topic = document.getElementById('testTopic').value;
+        testProbs =[];
+        
+        if (topic === 'Right Triangle Trigonometry' || topic === 'Mixed Trigonometry') {
+            testProbs.push(...[genSohCahToaSine, genSohCahToaCosine, genSohCahToaTangent, genSohCahToaInvSine, genSohCahToaInvCosine, genSohCahToaInvTangent, genPythagorean, genSixTrigRatios, genSpecialAngles].map(f => f()));
+        }
+        if (topic === 'Law of Sines' || topic === 'Mixed Law of Sines and Law of Cosines' || topic === 'Mixed Trigonometry') {
+            testProbs.push(...[genLawOfSinesDirect, genLawOfSinesIndirect, genLawOfSinesAngle].map(f => f()));
+        }
+        if (topic === 'Law of Cosines' || topic === 'Mixed Law of Sines and Law of Cosines' || topic === 'Mixed Trigonometry') {
+            testProbs.push(...[genLawOfCosinesSide, genLawOfCosinesSide, genLawOfCosinesAngle].map(f => f()));
+        }
+        if (topic === 'Mixed Law of Sines and Law of Cosines' || topic === 'Mixed Trigonometry') {
+            testProbs.push(genMultipleMethods());
+        }
+        if (topic === 'Mixed Trigonometry') {
+            testProbs.push(genDetMethod(true)); 
+        }
+        
+        shuffle(testProbs);
+        testStartTime = new Date();
+        
+        let html = `
+        <div id="testProgressHeader" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; padding-bottom: 15px;">
+            <h2 style="margin:0; color:#2c3e50;">Test in Progress</h2>
+            <button class="btn-danger" onclick="resetTest()" style="width:auto; padding: 10px 20px; margin: 0;">New Test</button>
+        </div>`;
+        
+        testProbs.forEach((p, i) => {
+            let isMainSvgHidden = (p.type === 'determine_method');
+            html += `<div class="test-question" id="test-q-${i}">
+                <h3>Question ${i+1}</h3>
+                <p class="instruction">${getInstruction(p)}</p>
+                <div style="display: ${isMainSvgHidden ? 'none' : 'block'};">${isMainSvgHidden ? '' : generateSVG(p, `test-ans-${i}-`)}</div>
+                <div id="test-interaction-${i}" class="interaction-area">
+                    ${renderInteractionArea(p, `test-ans-${i}-`)}
+                </div>
+                <div id="test-res-${i}" class="solution-steps" style="display:none;"></div>
+            </div>`;
+        });
+        html += `<div style="text-align:center; margin-top:30px;"><button class="btn-success" id="submitTestBtn" onclick="submitTest()" style="width:100%; max-width:300px;">Submit Test</button></div>`;
+        
+        document.getElementById('testContainer').innerHTML = html;
+        document.getElementById('testSetup').style.display = 'none';
+        document.getElementById('testContainer').style.display = 'block';
+        
+        renderMath();
+        initCustomSelects();
+    }
+
+    function submitTest() {
+        if (!confirm("Are you sure you want to submit your test?")) return;
+        testEndTime = new Date();
+        testScore = 0;
+        
+        testProbs.forEach((p, i) => {
+            let status = verifyAnswer(p, `test-ans-${i}-`);
+            let isCorrect = status.complete && status.correct;
+            if (isCorrect) testScore++;
+            
+            disableInteractionArea(p, `test-ans-${i}-`);
+            let res = document.getElementById(`test-res-${i}`);
+            res.style.display = 'block';
+            res.style.borderLeftColor = isCorrect ? '#2ecc71' : '#e74c3c';
+            
+            res.innerHTML = `
+                <p><strong>Status:</strong> <span style="color:${isCorrect ? '#2ecc71' : '#e74c3c'}; font-weight:bold;">${isCorrect ? 'Correct' : 'Wrong (or incomplete)'}</span></p>
+                ${(p.type === 'default' || p.type === 'multiple_methods') ? `<p><strong>Expected Answer:</strong> ${p.expected}</p>` : ''}
+                <h4>Step-by-step Solution:</h4>
+                ${p.steps.map(s => `<div class="math" data-tex="${s}"></div>`).join('')}
+            `;
+        });
+        
+        document.getElementById('submitTestBtn').style.display = 'none';
+        
+        let progressHeader = document.getElementById('testProgressHeader');
+        if (progressHeader) progressHeader.style.display = 'none';
+        
+        let header = document.createElement('div');
+        header.id = 'testResultsHeader';
+        header.innerHTML = `
+            <h2>Test Completed</h2>
+            <h3 style="color:#3498db;">Score: ${testScore} / ${testProbs.length}</h3>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="viewCertificate()" style="width:100%; max-width:200px;">View Certificate</button>
+                <button class="btn-danger" onclick="resetTest()" style="width:100%; max-width:200px;">New Test</button>
+            </div>
+        `;
+        document.getElementById('testContainer').prepend(header);
+        window.scrollTo({top: 0, behavior: 'smooth'});
+        renderMath();
+    }
+
+    function viewCertificate() {
+        let name = document.getElementById('studentName').value.trim();
+        let topic = document.getElementById('testTopic').value;
+        
+        let canvas = document.createElement('canvas');
+        canvas.width = 800; canvas.height = 600;
+        let ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#f5f6fa"; ctx.fillRect(10, 10, canvas.width - 20, canvas.height - 20);
+        ctx.strokeStyle = "#2c3e50"; ctx.lineWidth = 8; ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+        
+        ctx.fillStyle = "#2c3e50"; ctx.textAlign = "center";
+        ctx.font = "bold 45px Arial"; ctx.fillText("Certificate of Recognition", canvas.width/2, 120);
+        ctx.font = "italic 24px Arial"; ctx.fillText("This is proudly awarded to", canvas.width/2, 210);
+        ctx.font = "bold 40px Arial"; ctx.fillStyle = "#c2185b"; ctx.fillText(name, canvas.width/2, 280);
+        ctx.fillStyle = "#2c3e50"; ctx.font = "22px Arial"; ctx.fillText(`For successfully completing the Trigonometry Test on:`, canvas.width/2, 350);
+        ctx.font = "bold 26px Arial"; ctx.fillText(topic, canvas.width/2, 390);
+        ctx.font = "bold 28px Arial"; ctx.fillStyle = "#27ae60"; ctx.fillText(`Final Score: ${testScore} / ${testProbs.length}`, canvas.width/2, 440);
+        
+        ctx.textAlign = "left"; ctx.fillStyle = "#7f8c8d"; ctx.font = "16px Arial";
+        ctx.fillText(`Started: ${testStartTime.toLocaleString()}`, 80, 510);
+        ctx.fillText(`Finished: ${testEndTime.toLocaleString()}`, 80, 540);
+        
+        const downloadCanvas = () => {
+            try { let link = document.createElement('a'); link.download = `Certificate_${name.replace(/\s+/g, '_')}.jpg`; link.href = canvas.toDataURL("image/jpeg"); link.click(); } catch (err) { alert("Security Error: Cannot download certificate image directly when opening HTML locally. Please run this app via a Local Web Server."); }
+        };
+
+        let sigImg = new Image();
+        sigImg.onload = () => { let imgWidth = 200; let imgHeight = (sigImg.height / sigImg.width) * imgWidth; ctx.drawImage(sigImg, canvas.width - 80 - imgWidth, 525 - (imgHeight / 2), imgWidth, imgHeight); downloadCanvas(); };
+        sigImg.onerror = () => { downloadCanvas(); };
+        sigImg.src = 'signature.png';
+    }
+
+    displayRandomQuote();
+</script>
+
+</body>
+</html>
